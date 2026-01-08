@@ -1,4 +1,8 @@
 import numpy as np
+from skimage.transform import rotate
+from skimage.transform import warp
+from skimage.transform import ProjectiveTransform
+import random
 
 def flip_extend(X, y):
     self_fippable_horizontally = np.array([11,12,13,15,17,18,22,26,30,35])
@@ -40,3 +44,37 @@ def flip_extend(X, y):
             X_extended = np.append(X_extended, X_extended[y_extended == c][:, ::-1, ::-1, :], axis = 0)
         y_extended = np.append(y_extended, np.full((X_extended.shape[0] - y_extended.shape[0]), c, dtype = int))
     return (X_extended, y_extended)
+
+def rotate(X, intensity):
+    for i in range(X.shape[0]):
+        delta = 30 * intensity
+        X[i] = rotate(X[i], random.uniform(-delta, delta), mod = 'edge')
+    return X
+
+def apply_projection_transform(X, intensity):
+    image_size = X.shape[1]
+    d = image_size * 0.3 * intensity
+    for i in range(X.shape[0]):
+        tl_top = random.uniform(-d, d)
+        tl_left = random.uniform(-d, d)
+        bl_bottom = random.uniform(-d, d)
+        bl_left = random.uniform(-d, d)
+        tr_top = random.uniform(-d, d)
+        tr_right = random.uniform(-d, d)
+        br_bottom = random.uniform(-d, d)
+        br_right = random.uniform(-d, d)
+
+        transform = ProjectiveTransform()
+        transform.estimate(np.array((
+                (tl_left, tl_top),
+                (bl_left, image_size - bl_bottom),
+                (image_size - br_right, image_size - br_bottom),
+                (image_size - tr_right, tr_top)
+            )), np.array((
+                (0, 0),
+                (0, image_size),
+                (image_size, image_size),
+                (image_size, 0)
+            )))
+        X[i] = warp(X[i], transform, output_shape=(image_size, image_size), order = 1, mode = 'edge')
+    return X
