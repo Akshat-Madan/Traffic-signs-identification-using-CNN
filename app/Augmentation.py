@@ -45,10 +45,10 @@ def flip_extend(X, y):
         y_extended = np.append(y_extended, np.full((X_extended.shape[0] - y_extended.shape[0]), c, dtype = int))
     return (X_extended, y_extended)
 
-def rotate(X, intensity):
+def rotation(X, intensity):
     for i in range(X.shape[0]):
         delta = 30 * intensity
-        X[i] = rotate(X[i], random.uniform(-delta, delta), mod = 'edge')
+        X[i] = rotate(X[i], random.uniform(-delta, delta), mode='edge')
     return X
 
 def apply_projection_transform(X, intensity):

@@ -15,4 +15,7 @@ def preprocess_dataset(X, y = None):
         # Shuffle the data
         X, y = shuffle(X, y)
     X = X.reshape(X.shape + (1,)) 
+    # If no labels provided, return X and None for consistency
+    if y is None:
+        return X, None
     return X, y
