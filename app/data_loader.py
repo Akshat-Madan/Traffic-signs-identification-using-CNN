@@ -14,7 +14,7 @@ def load_data(data_dir, image_size=(32,32)):
 
         label = int(class_name)
         
-        for file_name in os.listdir(class_name):
+        for file_name in os.listdir(class_path):
             if not file_name.lower().endswith(".ppm"):
                 continue
         

@@ -1,11 +1,11 @@
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import layers, models
+from keras import layers, models
 import numpy as np
 
 
 def build_model(input_shape=(32, 32, 1), num_classes = 43):
-    model = model.Sequential()
+    model = models.Sequential()
 
     model.add(layers.Conv2D(32,(3,3), activation='relu',
                             input_shape=input_shape))
@@ -25,7 +25,7 @@ def build_model(input_shape=(32, 32, 1), num_classes = 43):
 
     model.compile(
         optimizer='adam',
-        loss='sparse_categorical_crossentropy',
+        loss='categorical_crossentropy',
         metrics=['accuracy']
     )
 
