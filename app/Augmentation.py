@@ -1,80 +1,101 @@
 import numpy as np
-from skimage.transform import rotate
-from skimage.transform import warp
-from skimage.transform import ProjectiveTransform
+from skimage.transform import rotate, warp, ProjectiveTransform
 import random
 
+
 def flip_extend(X, y):
-    self_fippable_horizontally = np.array([11,12,13,15,17,18,22,26,30,35])
+    self_flippable_horizontally = np.array([11,12,13,15,17,18,22,26,30,35])
     self_flippable_vertically = np.array([1,5,12,15,17])
     self_flippable_both = np.array([32,40])
+
     cross_flippable = np.array([
-        [19,20],
-        [33,34],
-        [36,37],
-        [38,39],
-        [20, 19], 
-        [34, 33], 
-        [37, 36], 
-        [39, 38], 
+        [19,20],[20,19],
+        [33,34],[34,33],
+        [36,37],[37,36],
+        [38,39],[39,38],
     ])
 
     num_classes = 43
 
-    X_extended = np.empty([0, X.shape[1], X.shape[2], X.shape[3]], dtype = X.dtype)
-    y_extended = np.empty([0], dtype = y.type)
+    X_ext = []
+    y_ext = []
 
     for c in range(num_classes):
-        X_extended = np.append(X_extended, X[y == c], axis = 0)
-        if c in self_fippable_horizontally:
-            X_extended = np.append(X_extended, X[y == c][:, :, ::-1, :], axis = 0)
-    
+        idx = (y == c)
+        X_c = X[idx]
 
-        if c in cross_flippable[:, 0]:
-            flip_class = cross_flippable[cross_flippable[:, 0] == c][0][1]
-            X_extended = np.append(X_extended, X[y == flip_class][:, :, ::-1, :], axis = 0)
-        y_extended = np.append(y_extended, np.full((X_extended.shape[0] - y_extended.shape[0]), c, dtype = int))
+        # Original
+        X_ext.append(X_c)
+        y_ext.append(np.full(len(X_c), c))
 
+        # Horizontal flip
+        if c in self_flippable_horizontally:
+            X_ext.append(X_c[:, :, ::-1, :])
+            y_ext.append(np.full(len(X_c), c))
 
+        # Cross flippable
+        for pair in cross_flippable:
+            if c == pair[0]:
+                X_pair = X[y == pair[1]]
+                X_ext.append(X_pair[:, :, ::-1, :])
+                y_ext.append(np.full(len(X_pair), c))
+
+        # Vertical flip
         if c in self_flippable_vertically:
-            X_extended = np.append(X_extended, X_extended[y_extended == c][:, ::-1, :, :], axis = 0)
-        y_extended = np.append(y_extended, np.full((X_extended.shape[0] - y_extended.shape[0]), c, dtype = int))
-        
+            X_v = X_c[:, ::-1, :, :]
+            X_ext.append(X_v)
+            y_ext.append(np.full(len(X_v), c))
+
+        # Both flips
         if c in self_flippable_both:
-            X_extended = np.append(X_extended, X_extended[y_extended == c][:, ::-1, ::-1, :], axis = 0)
-        y_extended = np.append(y_extended, np.full((X_extended.shape[0] - y_extended.shape[0]), c, dtype = int))
-    return (X_extended, y_extended)
+            X_b = X_c[:, ::-1, ::-1, :]
+            X_ext.append(X_b)
+            y_ext.append(np.full(len(X_b), c))
 
-def rotation(X, intensity):
+    X_ext = np.concatenate(X_ext, axis=0)
+    y_ext = np.concatenate(y_ext, axis=0)
+
+    return X_ext, y_ext
+
+
+def apply_rotation(X, intensity=0.5):
+    X_rot = X.copy()
+    delta = 30 * intensity
+
     for i in range(X.shape[0]):
-        delta = 30 * intensity
-        X[i] = rotate(X[i], random.uniform(-delta, delta), mode='edge')
-    return X
+        angle = random.uniform(-delta, delta)
+        X_rot[i] = rotate(X_rot[i], angle, mode='edge')
 
-def apply_projection_transform(X, intensity):
+    return X_rot
+
+
+def apply_projection_transform(X, intensity=0.5):
+    X_proj = X.copy()
     image_size = X.shape[1]
     d = image_size * 0.3 * intensity
-    for i in range(X.shape[0]):
-        tl_top = random.uniform(-d, d)
-        tl_left = random.uniform(-d, d)
-        bl_bottom = random.uniform(-d, d)
-        bl_left = random.uniform(-d, d)
-        tr_top = random.uniform(-d, d)
-        tr_right = random.uniform(-d, d)
-        br_bottom = random.uniform(-d, d)
-        br_right = random.uniform(-d, d)
 
+    for i in range(X.shape[0]):
         transform = ProjectiveTransform()
-        transform.estimate(np.array((
-                (tl_left, tl_top),
-                (bl_left, image_size - bl_bottom),
-                (image_size - br_right, image_size - br_bottom),
-                (image_size - tr_right, tr_top)
-            )), np.array((
+        transform.estimate(
+            np.array([
+                (random.uniform(-d, d), random.uniform(-d, d)),
+                (random.uniform(-d, d), image_size - random.uniform(-d, d)),
+                (image_size - random.uniform(-d, d), image_size - random.uniform(-d, d)),
+                (image_size - random.uniform(-d, d), random.uniform(-d, d))
+            ]),
+            np.array([
                 (0, 0),
                 (0, image_size),
                 (image_size, image_size),
                 (image_size, 0)
-            )))
-        X[i] = warp(X[i], transform, output_shape=(image_size, image_size), order = 1, mode = 'edge')
-    return X
+            ])
+        )
+
+        X_proj[i] = warp(
+            X_proj[i],
+            transform,
+            output_shape=(image_size, image_size),
+            mode='edge'
+        )
+
+    return X_proj
