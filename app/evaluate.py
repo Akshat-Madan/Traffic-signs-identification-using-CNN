@@ -4,40 +4,45 @@ from keras.models import load_model
 from skimage.io import imread
 from skimage.transform import resize
 from sklearn.model_selection import train_test_split
+import cv2
 
-
+# ---------------- CONFIG ----------------
 DATASET_PATH = "Dataset/Images"
 IMG_SIZE = 32
 NUM_CLASSES = 43
 MODEL_PATH = "traffic_sign_model.h5"
+# ---------------------------------------
 
-def load_dataset(dataset_path):
-    x = []
-    y = []
+def load_dataset(path):
+    X, y = [], []
 
-    for class_id in range(NUM_CLASSES):
-        class_path = os.path.join(dataset_path, str(class_id))
-        if not os.path.isdir(class_path):
+    for folder in sorted(os.listdir(path)):
+        folder_path = os.path.join(path, folder)
+
+        if not os.path.isdir(folder_path):
             continue
 
-    
-        for img_name in os.listdir(class_path):
-            img_path = os.path.join(class_path, img_name)
+        # Convert "00000" → 0
+        class_id = int(folder)
 
-            image = imread(img_path)
-            image = resize(image, (IMG_SIZE, IMG_SIZE), anti_aliasing=True)
-            image = image.astype(np.float32)
+        for img_name in os.listdir(folder_path):
+            img_path = os.path.join(folder_path, img_name)
 
-            X.append(image)
+            img = cv2.imread(img_path)
+            if img is None:
+                continue
+
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
+
+            X.append(img)
             y.append(class_id)
 
-    X = np.array(X)
+    X = np.array(X, dtype=np.float32) / 255.0
     y = np.array(y)
 
-    # normalize
-    X /= 255.0
-
     return X, y
+
 
 
 def main():

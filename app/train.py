@@ -14,35 +14,46 @@ from Augmentation import (
 )
 
 
-DATASET_PATH = "Dataset/Images"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+DATASET_PATH = os.path.join(BASE_DIR, "..", "Dataset", "Images")
 IMG_SIZE = 32
 NUM_CLASSES = 43
 EPOCHS = 15
 BATCH_SIZE = 64
 LEARNING_RATE = 0.001
 
-def load_dataset(path):
-    X, y = [], []
+def load_dataset(dataset_path):
+    images = []
+    labels = []
 
-    for class_id in range(NUM_CLASSES):
-        class_path = os.path.join(path, str(class_id))
+    class_folders = sorted(os.listdir(dataset_path))
+
+    for class_name in class_folders:
+        class_path = os.path.join(dataset_path, class_name)
+
         if not os.path.isdir(class_path):
             continue
-    
-    for img_name in os.listdir(class_path):
-        img_path = os.path.join(class_path, img_name)
-        img = cv2.imread(img_path)
 
-        if img is None:
-            continue
-            
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
+        label = int(class_name)  # "00023" → 23
 
-        X.append(img)
-        y.append(class_id)
+        for img_name in os.listdir(class_path):
+            if not img_name.endswith(".ppm"):
+                continue
 
-    return np.array(X, dtype=np.float32), np.array(y)
+            img_path = os.path.join(class_path, img_name)
+            img = cv2.imread(img_path)
+
+            if img is None:
+                continue
+
+            img = cv2.resize(img, (32, 32))
+            images.append(img)
+            labels.append(label)
+
+    return np.array(images), np.array(labels)
+
 
 
 print("[INFO] Loading dataset...")
