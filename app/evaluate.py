@@ -1,68 +1,87 @@
-import numpy as np
 import os
-from keras.models import load_model
-from skimage.io import imread
-from skimage.transform import resize
-from sklearn.model_selection import train_test_split
 import cv2
+import numpy as np
+from keras.models import load_model
+from keras.utils import to_categorical
+from sklearn.model_selection import train_test_split
 
-# ---------------- CONFIG ----------------
-DATASET_PATH = "Dataset/Images"
+
+# -----------------------------
+# Paths (bulletproof)
+# -----------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_PATH = os.path.join(BASE_DIR, "..", "Dataset", "Images")
+MODEL_PATH = os.path.join(BASE_DIR, "..", "traffic_sign_model.h5")
+
 IMG_SIZE = 32
 NUM_CLASSES = 43
-MODEL_PATH = "traffic_sign_model.h5"
-# ---------------------------------------
 
-def load_dataset(path):
-    X, y = [], []
 
-    for folder in sorted(os.listdir(path)):
-        folder_path = os.path.join(path, folder)
+# -----------------------------
+# Dataset Loader
+# -----------------------------
+def load_dataset(dataset_path):
+    images = []
+    labels = []
 
-        if not os.path.isdir(folder_path):
+    class_folders = sorted(os.listdir(dataset_path))
+
+    for class_name in class_folders:
+        class_path = os.path.join(dataset_path, class_name)
+
+        if not os.path.isdir(class_path):
             continue
 
-        # Convert "00000" → 0
-        class_id = int(folder)
+        label = int(class_name)  # "00023" → 23
 
-        for img_name in os.listdir(folder_path):
-            img_path = os.path.join(folder_path, img_name)
+        for img_name in os.listdir(class_path):
+            if not img_name.endswith(".ppm"):
+                continue
 
+            img_path = os.path.join(class_path, img_name)
             img = cv2.imread(img_path)
+
             if img is None:
                 continue
 
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
+            images.append(img)
+            labels.append(label)
 
-            X.append(img)
-            y.append(class_id)
-
-    X = np.array(X, dtype=np.float32) / 255.0
-    y = np.array(y)
-
-    return X, y
+    return np.array(images), np.array(labels)
 
 
-
+# -----------------------------
+# Main Evaluation
+# -----------------------------
 def main():
-    print("Loading dataset...")
+    print("[INFO] Loading dataset...")
     X, y = load_dataset(DATASET_PATH)
 
-    # Same split logic as training
+    print("[INFO] Normalizing images...")
+    X = X.astype("float32") / 255.0
+
+    print("[INFO] Splitting dataset...")
     _, X_test, _, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
+        X, y, test_size=0.2, random_state=42
     )
 
-    print("Loading trained model...")
+    # 🔥 IMPORTANT: convert to one-hot (matches training)
+    y_test = to_categorical(y_test, NUM_CLASSES)
+
+    print("[INFO] Loading trained model...")
+    if not os.path.exists(MODEL_PATH):
+        raise FileNotFoundError(f"Model not found at {MODEL_PATH}")
+
     model = load_model(MODEL_PATH)
 
-    print("Evaluating model...")
+    print("[INFO] Evaluating model...")
     loss, accuracy = model.evaluate(X_test, y_test, verbose=1)
 
-    print("\n✅ Evaluation Results")
-    print(f"Test Loss: {loss:.4f}")
-    print(f"Test Accuracy: {accuracy * 100:.2f}%")
+    print("\n==============================")
+    print(f"Test Loss     : {loss:.4f}")
+    print(f"Test Accuracy : {accuracy * 100:.2f}%")
+    print("==============================")
 
 
 if __name__ == "__main__":

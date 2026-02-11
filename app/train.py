@@ -15,9 +15,8 @@ from Augmentation import (
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-
 DATASET_PATH = os.path.join(BASE_DIR, "..", "Dataset", "Images")
+
 IMG_SIZE = 32
 NUM_CLASSES = 43
 EPOCHS = 15
@@ -36,7 +35,7 @@ def load_dataset(dataset_path):
         if not os.path.isdir(class_path):
             continue
 
-        label = int(class_name)  # "00023" → 23
+        label = int(class_name)  
 
         for img_name in os.listdir(class_path):
             if not img_name.endswith(".ppm"):
@@ -53,8 +52,6 @@ def load_dataset(dataset_path):
             labels.append(label)
 
     return np.array(images), np.array(labels)
-
-
 
 print("[INFO] Loading dataset...")
 X, y = load_dataset(DATASET_PATH)
