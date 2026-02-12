@@ -35,7 +35,7 @@ def load_dataset(dataset_path):
         if not os.path.isdir(class_path):
             continue
 
-        label = int(class_name)  
+        label = int(class_name)  # "00023" → 23
 
         for img_name in os.listdir(class_path):
             if not img_name.endswith(".ppm"):
