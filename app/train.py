@@ -6,13 +6,7 @@ from keras.utils import to_categorical
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
 
-from model import build_model 
-from Augmentation import (
-    flip_extend,
-    apply_rotation,
-    apply_projection_transform
-)
-
+from model import build_model
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_PATH = os.path.join(BASE_DIR, "..", "Dataset", "Images")
@@ -22,6 +16,7 @@ NUM_CLASSES = 43
 EPOCHS = 15
 BATCH_SIZE = 64
 LEARNING_RATE = 0.001
+
 
 def load_dataset(dataset_path):
     images = []
@@ -35,7 +30,7 @@ def load_dataset(dataset_path):
         if not os.path.isdir(class_path):
             continue
 
-        label = int(class_name)  # "00023" → 23
+        label = int(class_name)
 
         for img_name in os.listdir(class_path):
             if not img_name.endswith(".ppm"):
@@ -47,32 +42,35 @@ def load_dataset(dataset_path):
             if img is None:
                 continue
 
-            img = cv2.resize(img, (32, 32))
+            img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
             images.append(img)
             labels.append(label)
 
     return np.array(images), np.array(labels)
 
+
 print("[INFO] Loading dataset...")
 X, y = load_dataset(DATASET_PATH)
 
-X = X/255.0
+# Normalize
+X = X.astype("float32") / 255.0
 
-X_train, X_val , y_train, y_val = train_test_split(
-    X, y , test_size=0.2, random_state=42, stratify=y
+# Split dataset
+X_train, X_val, y_train, y_val = train_test_split(
+    X, y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
 )
 
-print("[INFO] Applying flip augmentation...")
-X_train, y_train = flip_extend(X_train, y_train)
-
-
-print("[INFO] Applying rotation...")
-X_train = apply_projection_transform(X_train, intensity=0.3)
-
+# One-hot encoding
 y_train = to_categorical(y_train, NUM_CLASSES)
 y_val = to_categorical(y_val, NUM_CLASSES)
 
-model = build_model()
+# Build model
+model = build_model(input_shape=(32, 32, 3), num_classes=NUM_CLASSES)
 
 model.compile(
     optimizer=Adam(learning_rate=LEARNING_RATE),
@@ -88,7 +86,6 @@ checkpoint = ModelCheckpoint(
     save_best_only=True,
     verbose=1
 )
-
 
 print("[INFO] Training model...")
 model.fit(
