@@ -12,7 +12,6 @@ A deep learning project that classifies German traffic signs in real time using 
 ## 📌 Table of Contents
 
 - [Overview](#-overview)
-- [Demo](#-demo)
 - [Dataset](#-dataset)
 - [Model Architecture](#-model-architecture)
 - [Results](#-results)
@@ -33,17 +32,7 @@ Traffic sign recognition is a critical component of autonomous driving systems. 
 - Custom CNN architecture built and trained with TensorFlow/Keras
 - Preprocessing pipeline using `skimage` for image normalisation and augmentation
 - Model evaluation using `sklearn` metrics (precision, recall, F1-score, confusion matrix)
-- Deployed as an interactive web application via the `app/` module
-
----
-
-## 🎬 Demo
-
-> Launch the app and upload a traffic sign image to get an instant prediction.
-
-```bash
-python app/app.py
-```
+- Pre-trained model serialised to `.h5` for portability and future deployment
 
 ---
 
@@ -112,7 +101,6 @@ Dense (43, Softmax)   ← Output layer (43 classes)
 | Deep Learning  | TensorFlow / Keras                           |
 | Image Processing | scikit-image (`skimage`)                  |
 | Data & Metrics | NumPy, scikit-learn (`sklearn`)              |
-| Web App        | Flask / Streamlit (see `app/`)               |
 | Model Serialisation | HDF5 (`.h5`)                          |
 
 ---
@@ -124,11 +112,6 @@ Traffic-signs-identification-using-CNN/
 │
 ├── Dataset/
 │   └── Images/              # Raw traffic sign images organised by class
-│
-├── app/                     # Web application for live inference
-│   └── app.py
-│
-├── venv/                    # Python virtual environment (not tracked)
 │
 ├── traffic_sign_model.h5    # Pre-trained CNN model weights
 ├── README.md
@@ -163,15 +146,7 @@ pip install tensorflow numpy scikit-image scikit-learn
 
 ## ▶️ Usage
 
-### Run the Web App
-
-```bash
-python app/app.py
-```
-
-Then open your browser at `http://localhost:5000` and upload a traffic sign image to get a real-time prediction.
-
-### Load the Pre-trained Model Directly
+### Load the Pre-trained Model
 
 ```python
 from tensorflow.keras.models import load_model
@@ -199,9 +174,9 @@ print(f"Predicted class: {class_id}")
 - [ ] Integrate data augmentation (rotation, zoom, brightness shifts) to improve robustness
 - [ ] Experiment with transfer learning using pre-trained models (e.g., MobileNetV2, EfficientNet)
 - [ ] Extend support to other international traffic sign datasets (US, UK, India)
-- [ ] Add a real-time webcam/video stream inference pipeline using OpenCV
-- [ ] Containerise the application with Docker for easy deployment
-- [ ] Deploy to cloud (AWS / GCP / Azure) with a REST API endpoint
+- [ ] Build a real-time inference pipeline using OpenCV for webcam/video stream input
+- [ ] Develop a web application frontend (Flask/Streamlit) for interactive predictions
+- [ ] Containerise with Docker and deploy a REST API endpoint to cloud (AWS / GCP / Azure)
 
 ---
 
